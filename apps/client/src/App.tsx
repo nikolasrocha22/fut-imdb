@@ -1,0 +1,329 @@
+// apps/client/src/App.tsx
+import { useState, useEffect } from 'react';
+import type { Match } from '@footrate/shared';
+import { MatchCard } from './components/MatchCard';
+import { MatchModal } from './components/MatchModal';
+
+const API_BASE_URL = 'http://localhost:3001';
+
+export default function App() {
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [activeTab, setActiveTab] = useState<string>('home'); // 'home', 'ranking', 'agenda'
+  const [leagueFilter, setLeagueFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+  const [theme, setTheme] = useState<string>('dark');
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // 1. Carrega a lista de partidas via REST
+  const fetchMatches = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/matches`);
+      if (res.ok) {
+        const data = await res.json();
+        setMatches(data);
+      }
+    } catch (err) {
+      console.error("Erro ao conectar com a API:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMatches();
+  }, []);
+
+  // 2. Conexão Server-Sent Events (SSE) para tempo real
+  useEffect(() => {
+    const sse = new EventSource(`${API_BASE_URL}/api/matches/live/sse`);
+
+    sse.onmessage = (event) => {
+      try {
+        const updatedMatch: Match = JSON.parse(event.data);
+        // Atualiza a partida na lista global
+        setMatches((prevMatches) =>
+          prevMatches.map((m) => (m.id === updatedMatch.id ? { ...m, ...updatedMatch } : m))
+        );
+      } catch (err) {
+        console.error("Erro ao processar dados em tempo real (SSE):", err);
+      }
+    };
+
+    sse.onerror = (err) => {
+      console.warn("Conexão SSE caiu ou falhou. Tentando reconectar...", err);
+    };
+
+    return () => {
+      sse.close();
+    };
+  }, []);
+
+  // 3. Gerenciamento do Tema Escuro/Claro
+  useEffect(() => {
+    document.body.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
+  // Filtragem e busca local das partidas
+  const getFilteredMatches = () => {
+    let result = matches;
+
+    // Filtro por campeonato
+    if (activeTab === 'home' && leagueFilter !== 'all') {
+      result = result.filter(m => m.league === leagueFilter);
+    }
+
+    // Busca por termo
+    if (searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(m =>
+        m.homeTeam.toLowerCase().includes(query) ||
+        m.awayTeam.toLowerCase().includes(query) ||
+        m.league.toLowerCase().includes(query)
+      );
+    }
+
+    return result;
+  };
+
+  const filteredMatches = getFilteredMatches();
+  const liveMatches = filteredMatches.filter(m => m.status === 'live');
+  const completedMatches = filteredMatches.filter(m => m.status === 'completed');
+  const scheduledMatches = filteredMatches.filter(m => m.status === 'scheduled');
+
+  // Encontra o jogo clássico lendário (nota mais alta) para o Hero
+  const getHeroMatch = () => {
+    const allCompleted = matches.filter(m => m.status === 'completed');
+    if (allCompleted.length === 0) return null;
+    return allCompleted.reduce((max, m) => m.rating > max.rating ? m : max, allCompleted[0]);
+  };
+
+  const heroMatch = getHeroMatch();
+  const leagues = ['all', ...new Set(matches.map(m => m.league))];
+
+  return (
+    <div className="app-container">
+      {/* Sidebar de Navegação */}
+      <aside className="sidebar">
+        <div className="brand">
+          <span className="brand-logo">⚽</span>
+          <h1 className="brand-name">Fut<span>Nota</span></h1>
+        </div>
+        <nav className="nav-menu">
+          <button 
+            className={`nav-item ${activeTab === 'home' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('home'); setSearchQuery(''); }}
+          >
+            <span className="nav-icon">🏠</span>
+            <span className="nav-text">Início</span>
+          </button>
+          <button 
+            className={`nav-item ${activeTab === 'ranking' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('ranking'); setSearchQuery(''); }}
+          >
+            <span className="nav-icon">⭐</span>
+            <span className="nav-text">Ranking IMDb</span>
+          </button>
+          <button 
+            className={`nav-item ${activeTab === 'agenda' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('agenda'); setSearchQuery(''); }}
+          >
+            <span className="nav-icon">📅</span>
+            <span className="nav-text">Agenda</span>
+          </button>
+        </nav>
+        <div className="sidebar-footer">
+          <p>© 2026 FutNota Inc.</p>
+          <small>React & Node.js V2</small>
+        </div>
+      </aside>
+
+      {/* Conteúdo Principal */}
+      <main className="main-layout">
+        {/* Header */}
+        <header className="main-header">
+          <div className="search-container">
+            <span className="search-icon">🔍</span>
+            <input 
+              type="text" 
+              placeholder="Buscar partidas, times, campeonatos..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="header-actions">
+            <button className="theme-toggle" onClick={toggleTheme} title="Alternar Modo Claro/Escuro">
+              {theme === 'dark' ? '🌙' : '☀️'}
+            </button>
+            <div className="user-profile">
+              <span className="avatar">⚽</span>
+              <span className="username">Fã de Futebol</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Dynamic Pages Area */}
+        <section className="content-area">
+          {loading ? (
+            <div className="empty-state">
+              <p>Carregando banco de dados...</p>
+            </div>
+          ) : searchQuery.trim() !== '' ? (
+            // Exibição de Resultados da Busca
+            <div>
+              <h2 className="section-title">Resultados da busca ({filteredMatches.length})</h2>
+              {filteredMatches.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-state-icon">🔍</div>
+                  <p>Nenhuma partida encontrada para sua busca.</p>
+                </div>
+              ) : (
+                <div className="match-grid">
+                  {filteredMatches.map(m => (
+                    <MatchCard key={m.id} match={m} onClick={() => setSelectedMatchId(m.id)} />
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : activeTab === 'home' ? (
+            // Página de Início
+            <div>
+              {/* Filtros por Campeonato */}
+              <div className="filters-bar">
+                {leagues.map(league => (
+                  <button
+                    key={league}
+                    className={`filter-btn ${leagueFilter === league ? 'active' : ''}`}
+                    onClick={() => setLeagueFilter(league)}
+                  >
+                    {league === 'all' ? 'Todos os Campeonatos' : league}
+                  </button>
+                ))}
+              </div>
+
+              {/* Hero Banner do jogo clássico */}
+              {heroMatch && leagueFilter === 'all' && (
+                <div className="hero-banner">
+                  <div className="hero-tag">🔥 MELHOR AVALIADO</div>
+                  <h2 className="hero-title">
+                    {heroMatch.homeEmoji} {heroMatch.homeTeam} {heroMatch.score?.home} x {heroMatch.score?.away} {heroMatch.awayTeam} {heroMatch.awayEmoji}
+                  </h2>
+                  <p className="hero-description">
+                    Acompanhe esta incrível partida de {heroMatch.league} avaliada como **⭐ {heroMatch.rating.toFixed(1)}** por nossa comunidade. Veja escalações táteis completas e as análises da torcida.
+                  </p>
+                  <button className="hero-btn" onClick={() => setSelectedMatchId(heroMatch.id)}>
+                    Ver Detalhes do Espetáculo
+                  </button>
+                </div>
+              )}
+
+              {/* Partidas Ao Vivo */}
+              {liveMatches.length > 0 && (
+                <div>
+                  <h2 className="section-title">
+                    Partidas ao Vivo <span className="title-badge">Ao Vivo</span>
+                  </h2>
+                  <div className="match-grid">
+                    {liveMatches.map(m => (
+                      <MatchCard key={m.id} match={m} onClick={() => setSelectedMatchId(m.id)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Partidas Recentes */}
+              {completedMatches.length > 0 && (
+                <div>
+                  <h2 className="section-title">Partidas Recentes</h2>
+                  <div className="match-grid">
+                    {completedMatches.map(m => (
+                      <MatchCard key={m.id} match={m} onClick={() => setSelectedMatchId(m.id)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : activeTab === 'ranking' ? (
+            // Tabela de Ranking Geral
+            <div>
+              <h2 className="section-title">Ranking de Partidas FutNota</h2>
+              {completedMatches.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-state-icon">⭐</div>
+                  <p>Não há partidas finalizadas no momento.</p>
+                </div>
+              ) : (
+                <table className="ranking-table">
+                  <thead>
+                    <tr>
+                      <th>Posição</th>
+                      <th>Partida</th>
+                      <th>Campeonato</th>
+                      <th>Avaliação Média</th>
+                      <th>Votos</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...completedMatches].sort((a,b) => b.rating - a.rating).map((m, idx) => (
+                      <tr key={m.id} onClick={() => setSelectedMatchId(m.id)}>
+                        <td className={`rank-number ${idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : idx === 2 ? 'rank-3' : ''}`}>
+                          #{idx + 1}
+                        </td>
+                        <td>
+                          <div className="match-cell-teams">
+                            <span>{m.homeEmoji} {m.homeTeam}</span>
+                            <span className="match-cell-score">{m.score?.home} x {m.score?.away}</span>
+                            <span>{m.awayTeam} {m.awayEmoji}</span>
+                          </div>
+                        </td>
+                        <td>{m.leagueEmoji} {m.league}</td>
+                        <td className="ranking-rating"><strong>⭐ {m.rating.toFixed(1)}</strong>/10</td>
+                        <td>{m.votes.toLocaleString("pt-BR")} votos</td>
+                        <td>{m.rating >= 9.0 && <span className="badge-spectacle">Obra de Arte</span>}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          ) : (
+            // Página de Agenda
+            <div>
+              <h2 className="section-title">Próximos Grandes Jogos</h2>
+              {scheduledMatches.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-state-icon">📅</div>
+                  <p>Não há partidas futuras agendadas.</p>
+                </div>
+              ) : (
+                <div className="match-grid">
+                  {scheduledMatches.map(m => (
+                    <MatchCard key={m.id} match={m} onClick={() => setSelectedMatchId(m.id)} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+      </main>
+
+      {/* Overlay Modal */}
+      {selectedMatchId && (
+        <MatchModal 
+          matchId={selectedMatchId}
+          onClose={() => setSelectedMatchId(null)}
+          onReviewSubmitted={(updated) => {
+            // Atualiza localmente a lista de jogos para recalcular o ranking instantaneamente
+            setMatches(prev => prev.map(m => m.id === updated.id ? updated : m));
+          }}
+          apiBaseUrl={API_BASE_URL}
+        />
+      )}
+    </div>
+  );
+}

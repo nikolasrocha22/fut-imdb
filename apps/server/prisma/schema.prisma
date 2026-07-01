@@ -1,0 +1,59 @@
+// apps/server/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  reviews      Review[]
+  createdAt    DateTime @default(now())
+}
+
+model Match {
+  id               String   @id
+  league           String
+  leagueEmoji      String
+  homeTeam         String
+  homeEmoji        String
+  awayTeam         String
+  awayEmoji        String
+  status           String   // 'live', 'completed', 'scheduled'
+  scoreHome        Int?
+  scoreAway        Int?
+  penHome          Int?
+  penAway          Int?
+  rating           Float    @default(0.0)
+  votes            Int      @default(0)
+  stadium          String
+  referee          String
+  date             String   // yyyy-mm-dd
+  time             String   // HH:MM
+  tacticalAnalysis String
+  timeline         String   // JSON string representando a array de eventos
+  lineups          String?  // JSON string representando a escalação
+  reviews          Review[]
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  matchId   String
+  rating    Float
+  text      String
+  likes     Int      @default(0)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  match     Match    @relation(fields: [matchId], references: [id])
+
+  @@unique([userId, matchId])
+  @@index([matchId])
+}

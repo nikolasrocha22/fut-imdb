@@ -1,0 +1,20 @@
+# Dependency directories
+node_modules/
+
+# Local databases
+apps/server/prisma/dev.db
+apps/server/prisma/dev.db-journal
+
+# Environment variables
+.env
+.env*.local
+
+# Build outputs
+dist/
+build/
+packages/shared/dist/
+apps/server/dist/
+
+# System files
+.DS_Store
+Thumbs.db
