@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FutNota - O IMDb das Partidas de Futebol</title>
+  <!-- Google Fonts: Outfit (headings), Inter (body), JetBrains Mono (data/numbers) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar de Navegação -->
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-logo">⚽</span>
+        <h1 class="brand-name">Fut<span>Nota</span></h1>
+      </div>
+      <nav class="nav-menu">
+        <button class="nav-item active" data-target="home">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-text">Início</span>
+        </button>
+        <button class="nav-item" data-target="ranking">
+          <span class="nav-icon">⭐</span>
+          <span class="nav-text">Ranking IMDb</span>
+        </button>
+        <button class="nav-item" data-target="agenda">
+          <span class="nav-icon">📅</span>
+          <span class="nav-text">Agenda</span>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <p>© 2026 FutNota Inc.</p>
+        <small>Avalie o espetáculo</small>
+      </div>
+    </aside>
+
+    <!-- Área Principal de Conteúdo -->
+    <main class="main-layout">
+      <!-- Cabeçalho Superior -->
+      <header class="main-header">
+        <div class="search-container">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-input" placeholder="Buscar partidas, times, campeonatos...">
+        </div>
+        <div class="header-actions">
+          <button class="theme-toggle" id="theme-toggle" title="Alternar Modo Claro/Escuro">🌙</button>
+          <div class="user-profile">
+            <span class="avatar">⚽</span>
+            <span class="username">Fã de Futebol</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Painel Dinâmico de Páginas -->
+      <section id="content-area" class="content-area">
+        <!-- Renderizado dinamicamente pelo JS -->
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal Detalhado da Partida (Overlay Premium) -->
+  <div id="match-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <button class="modal-close" id="modal-close-btn">&times;</button>
+      
+      <div id="modal-body-content">
+        <!-- Injetado dinamicamente pelo ui.js/app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="database.js"></script>
+  <script src="pitch.js"></script>
+  <script src="ui.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
