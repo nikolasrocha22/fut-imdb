@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import type { Match, TimelineEvent } from '@footrate/shared';
 import { Pitch } from './Pitch';
+import { LiveStats } from './LiveStats';
+import { AiPanel } from './AiPanel';
 
 interface MatchModalProps {
   matchId: string;
@@ -232,7 +234,15 @@ export const MatchModal: React.FC<MatchModalProps> = ({ matchId, onClose, onRevi
               className={`tab-btn ${activeTab === 'stats-tab' ? 'active' : ''}`}
               onClick={() => setActiveTab('stats-tab')}
             >
-              Estatísticas
+              🧠 Análise IA
+            </button>
+          )}
+          {!isScheduled && (
+            <button 
+              className={`tab-btn ${activeTab === 'livestats-tab' ? 'active' : ''}`}
+              onClick={() => setActiveTab('livestats-tab')}
+            >
+              📊 Estatísticas
             </button>
           )}
           <button 
@@ -247,12 +257,14 @@ export const MatchModal: React.FC<MatchModalProps> = ({ matchId, onClose, onRevi
           >
             Cronologia
           </button>
-          <button 
-            className={`tab-btn ${activeTab === 'analysis-tab' ? 'active' : ''}`}
-            onClick={() => setActiveTab('analysis-tab')}
-          >
-            Análise Tática
-          </button>
+          {isScheduled && (
+            <button 
+              className={`tab-btn ${activeTab === 'ai-tab' ? 'active' : ''}`}
+              onClick={() => setActiveTab('ai-tab')}
+            >
+              🧠 Análise IA
+            </button>
+          )}
           {isScheduled ? (
             <button 
               className={`tab-btn ${activeTab === 'predictions-tab' ? 'active' : ''}`}
@@ -272,39 +284,41 @@ export const MatchModal: React.FC<MatchModalProps> = ({ matchId, onClose, onRevi
 
         {/* Tab Content */}
         <div className="tab-content">
-          {activeTab === 'stats-tab' && match.stats && (
-            <div className="stats-list">
-              {[
-                { name: 'Posse de Bola', key: 'possession', suffix: '%' },
-                { name: 'Finalizações', key: 'shots', suffix: '' },
-                { name: 'Finalizações no Gol', key: 'shotsOnTarget', suffix: '' },
-                { name: 'Gols Esperados (xG)', key: 'xG', suffix: '' },
-                { name: 'Faltas', key: 'fouls', suffix: '' },
-                { name: 'Escanteios', key: 'corners', suffix: '' },
-                { name: 'Cartões Amarelos', key: 'yellowCards', suffix: '' },
-                { name: 'Cartões Vermelhos', key: 'redCards', suffix: '' }
-              ].map(stat => {
-                const homeVal = match.stats![stat.key as keyof typeof match.stats][0];
-                const awayVal = match.stats![stat.key as keyof typeof match.stats][1];
-                const total = homeVal + awayVal;
-                const homePct = total > 0 ? (homeVal / total) * 100 : 50;
-                const awayPct = total > 0 ? (awayVal / total) * 100 : 50;
 
-                return (
-                  <div className="stat-row" key={stat.name}>
-                    <div className="stat-info">
-                      <span>{homeVal}{stat.suffix}</span>
-                      <span className="stat-name">{stat.name}</span>
-                      <span>{awayVal}{stat.suffix}</span>
-                    </div>
-                    <div className="stat-bar-container">
-                      <div className="stat-bar-home" style={{ width: `${homePct}%` }}></div>
-                      <div className="stat-bar-away" style={{ width: `${awayPct}%` }}></div>
-                    </div>
-                  </div>
-                );
-              })}
+          {/* 🧠 Aba: Análise IA (partidas ao vivo ou encerradas) */}
+          {activeTab === 'stats-tab' && (
+            <AiPanel
+              matchId={matchId}
+              matchStatus={match.status as 'scheduled' | 'live' | 'completed'}
+              liveMinute={(match as any).liveMinute}
+            />
+          )}
+
+          {/* 📊 Aba: Estatísticas ao vivo */}
+          {activeTab === 'livestats-tab' && (
+            <div style={{ padding: '12px 0' }}>
+              {(match as any).liveStats ? (
+                <LiveStats
+                  stats={(match as any).liveStats}
+                  homeColor="#00ff88"
+                  awayColor="#00c3ff"
+                />
+              ) : (
+                <div className="tab-empty">
+                  <p>📊 Estatísticas ao vivo serão exibidas quando a partida começar.</p>
+                  <p style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: 8 }}>Os dados são atualizados a cada 30 segundos via API-Football.</p>
+                </div>
+              )}
             </div>
+          )}
+
+          {/* 🧠 Aba: Análise IA (partidas agendadas) */}
+          {activeTab === 'ai-tab' && (
+            <AiPanel
+              matchId={matchId}
+              matchStatus={match.status as 'scheduled' | 'live' | 'completed'}
+              liveMinute={(match as any).liveMinute}
+            />
           )}
 
           {activeTab === 'lineup-tab' && (

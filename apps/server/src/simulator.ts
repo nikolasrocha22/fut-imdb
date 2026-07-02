@@ -110,8 +110,18 @@ export function startMatchSimulator() {
         // Se o minuto mudou ou houve gols/cartões, atualiza o DB e publica no Redis
         // Vamos atualizar as estatísticas também
         let lineups = match.lineups;
+        const mockStats = generateMockLiveStats(
+          match.homeTeam,
+          match.awayTeam,
+          currentMinute,
+          scoreHome,
+          scoreAway
+        );
+
         const dbUpdates: any = {
-          timeline: JSON.stringify(timeline)
+          timeline: JSON.stringify(timeline),
+          liveMinute: currentMinute,
+          liveStats: JSON.stringify(mockStats)
         };
 
         if (updated) {
@@ -124,11 +134,12 @@ export function startMatchSimulator() {
           data: dbUpdates
         });
 
-        // Adiciona o minuto virtual atual para enviar no SSE
+        // Adiciona o minuto virtual atual e os stats desserializados para enviar no SSE
         const matchDataToSend = {
           ...updatedMatch,
           minute: currentMinute,
-          timeline: timeline // Envia como array de verdade para poupar JSON.parse no React
+          timeline: timeline, // Envia como array de verdade para poupar JSON.parse no React
+          liveStats: mockStats
         };
 
         await redis.publish('match:updates', JSON.stringify(matchDataToSend));
@@ -137,6 +148,57 @@ export function startMatchSimulator() {
       console.error("Erro na simulação de partidas:", err);
     }
   }, 10000); // 10s
+}
+
+function generateMockLiveStats(homeTeam: string, awayTeam: string, currentMinute: number, scoreHome: number, scoreAway: number) {
+  const totalShotsHome = Math.max(scoreHome + 1, Math.round(currentMinute / 8) + Math.floor(Math.random() * 3));
+  const totalShotsAway = Math.max(scoreAway + 1, Math.round(currentMinute / 9) + Math.floor(Math.random() * 3));
+  
+  const shotsOnGoalHome = Math.max(scoreHome, Math.round(totalShotsHome / 2.2));
+  const shotsOnGoalAway = Math.max(scoreAway, Math.round(totalShotsAway / 2.3));
+  
+  const possessionHome = Math.min(80, Math.max(20, 50 + Math.round(Math.sin(currentMinute / 10) * 10) + (scoreHome - scoreAway) * 2));
+  const possessionAway = 100 - possessionHome;
+  
+  return {
+    homeTeam,
+    awayTeam,
+    possession: { home: possessionHome, away: possessionAway },
+    shotsTotal: { home: totalShotsHome, away: totalShotsAway },
+    shotsOnGoal: { home: shotsOnGoalHome, away: shotsOnGoalAway },
+    corners: {
+      home: Math.round(currentMinute / 12) + Math.floor(Math.random() * 2),
+      away: Math.round(currentMinute / 15) + Math.floor(Math.random() * 2)
+    },
+    fouls: {
+      home: Math.round(currentMinute / 6) + Math.floor(Math.random() * 2),
+      away: Math.round(currentMinute / 7) + Math.floor(Math.random() * 2)
+    },
+    yellowCards: {
+      home: Math.round(currentMinute / 30) + Math.floor(Math.random() * 1),
+      away: Math.round(currentMinute / 25) + Math.floor(Math.random() * 1)
+    },
+    redCards: {
+      home: 0,
+      away: 0
+    },
+    offsides: {
+      home: Math.round(currentMinute / 25),
+      away: Math.round(currentMinute / 20)
+    },
+    passesTotal: {
+      home: Math.round(currentMinute * 4) + Math.floor(Math.random() * 15),
+      away: Math.round(currentMinute * 3.8) + Math.floor(Math.random() * 15)
+    },
+    passesAccuracy: {
+      home: 75 + Math.floor(Math.random() * 10),
+      away: 73 + Math.floor(Math.random() * 10)
+    },
+    dangerousAttacks: {
+      home: Math.round(currentMinute * 0.7) + Math.floor(Math.random() * 5),
+      away: Math.round(currentMinute * 0.6) + Math.floor(Math.random() * 5)
+    }
+  };
 }
 
 // Helpers para nomes fictícios de jogadores baseados nos times

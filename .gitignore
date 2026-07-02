@@ -1,20 +1,30 @@
-# Dependency directories
+# Dependencies
 node_modules/
 
-# Local databases
+# Build output
+apps/server/dist/
+apps/client/dist/
+packages/shared/dist/
+
+# Environment files (NUNCA commitar chaves!)
+.env
+.env.local
+.env.production
+
+# Prisma
 apps/server/prisma/dev.db
 apps/server/prisma/dev.db-journal
 
-# Environment variables
-.env
-.env*.local
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# Build outputs
-dist/
-build/
-packages/shared/dist/
-apps/server/dist/
-
-# System files
+# OS files
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

@@ -5,6 +5,9 @@ import dotenv from 'dotenv';
 import { prisma, seedDatabase } from './db';
 import { redis } from './redis';
 import { startMatchSimulator } from './simulator';
+import { startSyncService } from './syncService';
+import { startLivePoller } from './livePoller';
+import { getLatestAnalysis, generatePreMatchAnalysis, isAiConfigured } from './aiService';
 
 dotenv.config();
 
@@ -32,7 +35,8 @@ app.get('/api/matches', async (req, res) => {
     const parsedMatches = matches.map(m => ({
       ...m,
       timeline: JSON.parse(m.timeline || '[]'),
-      lineups: m.lineups ? JSON.parse(m.lineups) : null
+      lineups: m.lineups ? JSON.parse(m.lineups) : null,
+      liveStats: m.liveStats ? JSON.parse(m.liveStats) : null
     }));
 
     res.json(parsedMatches);
@@ -87,6 +91,7 @@ app.get('/api/matches/:id', async (req, res) => {
       ...match,
       timeline: JSON.parse(match.timeline || '[]'),
       lineups: match.lineups ? JSON.parse(match.lineups) : null,
+      liveStats: match.liveStats ? JSON.parse(match.liveStats) : null,
       reviews: match.reviews.map(r => ({ ...r, date: r.createdAt.toISOString() })),
       predictions: match.predictions.map(p => ({
         id: p.id,
@@ -205,6 +210,7 @@ app.post('/api/matches/:id/reviews', async (req, res) => {
       ...updatedMatch,
       timeline: JSON.parse(updatedMatch!.timeline || '[]'),
       lineups: updatedMatch!.lineups ? JSON.parse(updatedMatch!.lineups) : null,
+      liveStats: updatedMatch!.liveStats ? JSON.parse(updatedMatch!.liveStats) : null,
       reviews: updatedMatch!.reviews.map(r => ({ ...r, date: r.createdAt.toISOString() })),
       predictions: updatedMatch!.predictions.map(p => ({
         id: p.id,
@@ -314,6 +320,7 @@ app.post('/api/matches/:id/predictions', async (req, res) => {
       ...updatedMatch,
       timeline: JSON.parse(updatedMatch!.timeline || '[]'),
       lineups: updatedMatch!.lineups ? JSON.parse(updatedMatch!.lineups) : null,
+      liveStats: updatedMatch!.liveStats ? JSON.parse(updatedMatch!.liveStats) : null,
       reviews: updatedMatch!.reviews.map(r => ({ ...r, date: r.createdAt.toISOString() })),
       predictions: updatedMatch!.predictions.map(p => ({
         id: p.id,
@@ -333,6 +340,75 @@ app.post('/api/matches/:id/predictions', async (req, res) => {
     res.json(parsedMatch);
   } catch (err: any) {
     console.error("Erro ao salvar palpite:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// REST: Estatísticas ao vivo de uma partida
+app.get('/api/matches/:id/stats', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const match = await prisma.match.findUnique({ where: { id } });
+    if (!match) return res.status(404).json({ error: 'Partida não encontrada.' });
+    const stats = match.liveStats ? JSON.parse(match.liveStats) : null;
+    res.json({ matchId: id, liveMinute: match.liveMinute, stats });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// REST: Análise de IA de uma partida (cache ou gera nova)
+app.get('/api/matches/:id/ai-analysis', async (req, res) => {
+  const { id } = req.params;
+  const { type } = req.query as { type?: string };
+  try {
+    const match = await prisma.match.findUnique({
+      where: { id },
+      include: { aiAnalyses: { orderBy: { createdAt: 'desc' }, take: 10 } }
+    });
+    if (!match) return res.status(404).json({ error: 'Partida não encontrada.' });
+
+    const analysisType = type || (match.status === 'live' ? 'live' : match.status === 'completed' ? 'post_match' : 'pre_match');
+
+    // Busca cache
+    let content = await getLatestAnalysis(id, analysisType);
+
+    // Se não há cache e é pré-jogo, gera agora
+    if (!content && analysisType === 'pre_match' && isAiConfigured()) {
+      content = await generatePreMatchAnalysis({
+        id: match.id,
+        homeTeam: match.homeTeam,
+        awayTeam: match.awayTeam,
+        league: match.league,
+        stadium: match.stadium,
+        date: match.date,
+        time: match.time,
+        lineups: match.lineups ? JSON.parse(match.lineups) : null,
+        tacticalAnalysis: match.tacticalAnalysis,
+      });
+    }
+
+    // Busca o comentário ao vivo mais recente
+    const liveCommentary = match.status === 'live'
+      ? await getLatestAnalysis(id, 'live')
+      : null;
+
+    res.json({
+      matchId: id,
+      type: analysisType,
+      content: content || match.tacticalAnalysis,
+      liveCommentary,
+      liveMinute: match.liveMinute,
+      aiEnabled: isAiConfigured(),
+      allAnalyses: match.aiAnalyses.map(a => ({
+        type: a.type,
+        minute: a.minute,
+        content: a.content,
+        createdAt: a.createdAt,
+      }))
+    });
+  } catch (err: any) {
+    console.error('Erro ao buscar análise IA:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -387,9 +463,16 @@ async function start() {
   // Inicia o servidor HTTP
   app.listen(PORT, () => {
     console.log(`Servidor rodando em http://localhost:${PORT}`);
-    
-    // Inicia o simulador automático de jogos ao vivo
+    console.log(`IA habilitada: ${isAiConfigured() ? '✅ Gemini configurado' : '⚠️  GEMINI_API_KEY não configurada'}`);
+
+    // Inicia o simulador automático de jogos ao vivo (dados locais/seed)
     startMatchSimulator();
+
+    // Inicia o serviço de sincronização diária com API-Football
+    startSyncService();
+
+    // Inicia o live poller para partidas ao vivo em tempo real
+    startLivePoller();
   });
 }
 

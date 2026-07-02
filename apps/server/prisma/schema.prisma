@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -21,6 +21,7 @@ model User {
 
 model Match {
   id               String       @id
+  externalId       Int?         @unique  // ID da API-Football
   league           String
   leagueEmoji      String
   homeTeam         String
@@ -29,22 +30,25 @@ model Match {
   awayTeam         String
   awayEmoji        String
   awayLogoUrl      String?
-  status           String       // 'live', 'completed', 'scheduled'
+  status           String                // 'live', 'completed', 'scheduled'
   scoreHome        Int?
   scoreAway        Int?
   penHome          Int?
   penAway          Int?
+  liveMinute       Int?                  // Minuto atual da partida ao vivo
+  liveStats        String?               // JSON com estatísticas ao vivo (ApiMatchStats)
   rating           Float        @default(0.0)
   votes            Int          @default(0)
   stadium          String
   referee          String
-  date             String       // yyyy-mm-dd
-  time             String       // HH:MM
+  date             String                // yyyy-mm-dd
+  time             String                // HH:MM
   tacticalAnalysis String
-  timeline         String       // JSON string representando a array de eventos
-  lineups          String?      // JSON string representando a escalação
+  timeline         String                // JSON string com array de eventos
+  lineups          String?               // JSON string com escalações
   reviews          Review[]
   predictions      Prediction[]
+  aiAnalyses       AiAnalysis[]
 }
 
 model Review {
@@ -75,4 +79,17 @@ model Prediction {
 
   @@unique([userId, matchId])
   @@index([matchId])
+}
+
+model AiAnalysis {
+  id        String   @id @default(uuid())
+  matchId   String
+  type      String   // 'pre_match', 'live', 'post_match'
+  minute    Int      @default(0)
+  content   String
+  createdAt DateTime @default(now())
+  match     Match    @relation(fields: [matchId], references: [id])
+
+  @@index([matchId, type])
+  @@index([matchId, type, minute])
 }
