@@ -109,36 +109,38 @@ export default function App() {
     <div className="app-container">
       {/* Sidebar de Navegação */}
       <aside className="sidebar">
-        <div className="brand">
-          <span className="brand-logo">⚽</span>
-          <h1 className="brand-name">Fut<span>Nota</span></h1>
+        <div>
+          <div className="brand">
+            <span className="brand-logo">⚽</span>
+            <h1 className="brand-name">Fut<span>Nota</span></h1>
+          </div>
+          <nav className="nav-menu">
+            <button 
+              className={`nav-item ${activeTab === 'home' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('home'); setSearchQuery(''); }}
+            >
+              <span className="nav-icon">🏠</span>
+              <span className="nav-text">Início</span>
+            </button>
+            <button 
+              className={`nav-item ${activeTab === 'ranking' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('ranking'); setSearchQuery(''); }}
+            >
+              <span className="nav-icon">⭐</span>
+              <span className="nav-text">Ranking IMDb</span>
+            </button>
+            <button 
+              className={`nav-item ${activeTab === 'agenda' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('agenda'); setSearchQuery(''); }}
+            >
+              <span className="nav-icon">📅</span>
+              <span className="nav-text">Agenda</span>
+            </button>
+          </nav>
         </div>
-        <nav className="nav-menu">
-          <button 
-            className={`nav-item ${activeTab === 'home' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('home'); setSearchQuery(''); }}
-          >
-            <span className="nav-icon">🏠</span>
-            <span className="nav-text">Início</span>
-          </button>
-          <button 
-            className={`nav-item ${activeTab === 'ranking' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('ranking'); setSearchQuery(''); }}
-          >
-            <span className="nav-icon">⭐</span>
-            <span className="nav-text">Ranking IMDb</span>
-          </button>
-          <button 
-            className={`nav-item ${activeTab === 'agenda' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('agenda'); setSearchQuery(''); }}
-          >
-            <span className="nav-icon">📅</span>
-            <span className="nav-text">Agenda</span>
-          </button>
-        </nav>
         <div className="sidebar-footer">
           <p>© 2026 FutNota Inc.</p>
-          <small>React & Node.js V2</small>
+          <small>Design Premium v3</small>
         </div>
       </aside>
 
@@ -177,7 +179,7 @@ export default function App() {
             <div>
               <h2 className="section-title">Resultados da busca ({filteredMatches.length})</h2>
               {filteredMatches.length === 0 ? (
-                <div className="empty-state">
+                <div className="empty-state fade-in-up-anim">
                   <div className="empty-state-icon">🔍</div>
                   <p>Nenhuma partida encontrada para sua busca.</p>
                 </div>
@@ -209,14 +211,25 @@ export default function App() {
               {heroMatch && leagueFilter === 'all' && (
                 <div className="hero-banner">
                   <div className="hero-tag">🔥 MELHOR AVALIADO</div>
-                  <h2 className="hero-title">
-                    {heroMatch.homeEmoji} {heroMatch.homeTeam} {heroMatch.score?.home} x {heroMatch.score?.away} {heroMatch.awayTeam} {heroMatch.awayEmoji}
+                  <h2 className="hero-title" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                    {heroMatch.homeLogoUrl && (
+                      <img src={heroMatch.homeLogoUrl} alt="" className="team-logo-img" style={{ width: '48px', height: '48px' }} />
+                    )}
+                    <span>{heroMatch.homeTeam}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)' }}>{heroMatch.score?.home}</span>
+                    <span style={{ color: 'var(--text-subtle)', fontWeight: 300 }}>x</span>
+                    <span style={{ fontFamily: 'var(--font-mono)' }}>{heroMatch.score?.away}</span>
+                    <span>{heroMatch.awayTeam}</span>
+                    {heroMatch.awayLogoUrl && (
+                      <img src={heroMatch.awayLogoUrl} alt="" className="team-logo-img" style={{ width: '48px', height: '48px' }} />
+                    )}
                   </h2>
                   <p className="hero-description">
-                    Acompanhe esta incrível partida de {heroMatch.league} avaliada como **⭐ {heroMatch.rating.toFixed(1)}** por nossa comunidade. Veja escalações táteis completas e as análises da torcida.
+                    Acompanhe esta incrível partida de {heroMatch.league} avaliada com **⭐ {heroMatch.rating.toFixed(1)}** por nossa comunidade. Veja escalações táteis completas e as análises da torcida.
                   </p>
                   <button className="hero-btn" onClick={() => setSelectedMatchId(heroMatch.id)}>
-                    Ver Detalhes do Espetáculo
+                    <span>Ver Detalhes do Espetáculo</span>
+                    <span className="btn-arrow-circle">↗</span>
                   </button>
                 </div>
               )}
@@ -249,7 +262,7 @@ export default function App() {
             </div>
           ) : activeTab === 'ranking' ? (
             // Tabela de Ranking Geral
-            <div>
+            <div className="fade-in-up-anim">
               <h2 className="section-title">Ranking de Partidas FutNota</h2>
               {completedMatches.length === 0 ? (
                 <div className="empty-state">
@@ -276,9 +289,15 @@ export default function App() {
                         </td>
                         <td>
                           <div className="match-cell-teams">
-                            <span>{m.homeEmoji} {m.homeTeam}</span>
+                            {m.homeLogoUrl && (
+                              <img src={m.homeLogoUrl} alt="" className="team-logo-img" style={{ width: '24px', height: '24px' }} />
+                            )}
+                            <span>{m.homeTeam}</span>
                             <span className="match-cell-score">{m.score?.home} x {m.score?.away}</span>
-                            <span>{m.awayTeam} {m.awayEmoji}</span>
+                            <span>{m.awayTeam}</span>
+                            {m.awayLogoUrl && (
+                              <img src={m.awayLogoUrl} alt="" className="team-logo-img" style={{ width: '24px', height: '24px' }} />
+                            )}
                           </div>
                         </td>
                         <td>{m.leagueEmoji} {m.league}</td>
@@ -296,7 +315,7 @@ export default function App() {
             <div>
               <h2 className="section-title">Próximos Grandes Jogos</h2>
               {scheduledMatches.length === 0 ? (
-                <div className="empty-state">
+                <div className="empty-state fade-in-up-anim">
                   <div className="empty-state-icon">📅</div>
                   <p>Não há partidas futuras agendadas.</p>
                 </div>

@@ -54,14 +54,33 @@ export interface Review {
   createdAt?: string;
 }
 
+export interface Prediction {
+  id: string;
+  userId: string;
+  username?: string;
+  predictHomeScore: number;
+  predictAwayScore: number;
+  analysis: string;
+  createdAt?: string;
+}
+
+export interface PredictionStats {
+  homeWinPct: number;
+  drawPct: number;
+  awayWinPct: number;
+  totalCount: number;
+}
+
 export interface Match {
   id: string;
   league: string;
   leagueEmoji: string;
   homeTeam: string;
   homeEmoji: string;
+  homeLogoUrl?: string | null;
   awayTeam: string;
   awayEmoji: string;
+  awayLogoUrl?: string | null;
   status: MatchStatus;
   date: string; // ISO yyyy-mm-dd
   time: string; // HH:MM
@@ -75,6 +94,8 @@ export interface Match {
   timeline: TimelineEvent[];
   tacticalAnalysis: string;
   reviews: Review[];
+  predictions?: Prediction[];
+  predictionStats?: PredictionStats;
   userRating?: number | null; // Se o usuário atual deu nota
 }
 

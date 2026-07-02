@@ -41,7 +41,7 @@ app.get('/api/matches', async (req, res) => {
   }
 });
 
-// REST: Detalhes de uma partida específica (incluindo reviews)
+// REST: Detalhes de uma partida específica (incluindo reviews e palpites)
 app.get('/api/matches/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -49,6 +49,14 @@ app.get('/api/matches/:id', async (req, res) => {
       where: { id },
       include: {
         reviews: {
+          orderBy: { createdAt: 'desc' }
+        },
+        predictions: {
+          include: {
+            user: {
+              select: { username: true }
+            }
+          },
           orderBy: { createdAt: 'desc' }
         }
       }
@@ -58,10 +66,38 @@ app.get('/api/matches/:id', async (req, res) => {
       return res.status(404).json({ error: 'Partida não encontrada.' });
     }
 
+    const total = match.predictions.length;
+    let homeWins = 0;
+    let draws = 0;
+    let awayWins = 0;
+    for (const p of match.predictions) {
+      if (p.predictHomeScore > p.predictAwayScore) homeWins++;
+      else if (p.predictHomeScore === p.predictAwayScore) draws++;
+      else awayWins++;
+    }
+
+    const predictionStats = {
+      homeWinPct: total > 0 ? Math.round((homeWins / total) * 100) : 0,
+      drawPct: total > 0 ? Math.round((draws / total) * 100) : 0,
+      awayWinPct: total > 0 ? Math.round((awayWins / total) * 100) : 0,
+      totalCount: total
+    };
+
     const parsed = {
       ...match,
       timeline: JSON.parse(match.timeline || '[]'),
-      lineups: match.lineups ? JSON.parse(match.lineups) : null
+      lineups: match.lineups ? JSON.parse(match.lineups) : null,
+      reviews: match.reviews.map(r => ({ ...r, date: r.createdAt.toISOString() })),
+      predictions: match.predictions.map(p => ({
+        id: p.id,
+        userId: p.userId,
+        username: p.user.username,
+        predictHomeScore: p.predictHomeScore,
+        predictAwayScore: p.predictAwayScore,
+        analysis: p.analysis,
+        createdAt: p.createdAt.toISOString()
+      })),
+      predictionStats
     };
 
     res.json(parsed);
@@ -139,13 +175,47 @@ app.post('/api/matches/:id/reviews', async (req, res) => {
     // Retorna a partida atualizada
     const updatedMatch = await prisma.match.findUnique({
       where: { id },
-      include: { reviews: { orderBy: { createdAt: 'desc' } } }
+      include: {
+        reviews: { orderBy: { createdAt: 'desc' } },
+        predictions: {
+          include: { user: { select: { username: true } } },
+          orderBy: { createdAt: 'desc' }
+        }
+      }
     });
+
+    const total = updatedMatch!.predictions.length;
+    let homeWins = 0;
+    let draws = 0;
+    let awayWins = 0;
+    for (const p of updatedMatch!.predictions) {
+      if (p.predictHomeScore > p.predictAwayScore) homeWins++;
+      else if (p.predictHomeScore === p.predictAwayScore) draws++;
+      else awayWins++;
+    }
+
+    const predictionStats = {
+      homeWinPct: total > 0 ? Math.round((homeWins / total) * 100) : 0,
+      drawPct: total > 0 ? Math.round((draws / total) * 100) : 0,
+      awayWinPct: total > 0 ? Math.round((awayWins / total) * 100) : 0,
+      totalCount: total
+    };
 
     const parsedMatch = {
       ...updatedMatch,
       timeline: JSON.parse(updatedMatch!.timeline || '[]'),
-      lineups: updatedMatch!.lineups ? JSON.parse(updatedMatch!.lineups) : null
+      lineups: updatedMatch!.lineups ? JSON.parse(updatedMatch!.lineups) : null,
+      reviews: updatedMatch!.reviews.map(r => ({ ...r, date: r.createdAt.toISOString() })),
+      predictions: updatedMatch!.predictions.map(p => ({
+        id: p.id,
+        userId: p.userId,
+        username: p.user.username,
+        predictHomeScore: p.predictHomeScore,
+        predictAwayScore: p.predictAwayScore,
+        analysis: p.analysis,
+        createdAt: p.createdAt.toISOString()
+      })),
+      predictionStats
     };
 
     // Publica no Redis para notificar conexões SSE ativas
@@ -154,6 +224,115 @@ app.post('/api/matches/:id/reviews', async (req, res) => {
     res.json(parsedMatch);
   } catch (err: any) {
     console.error("Erro ao salvar avaliação:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// REST: Publicar um palpite para partidas agendadas
+app.post('/api/matches/:id/predictions', async (req, res) => {
+  const { id } = req.params;
+  const { predictHomeScore, predictAwayScore, analysis } = req.body;
+
+  if (predictHomeScore === undefined || predictAwayScore === undefined || predictHomeScore < 0 || predictAwayScore < 0) {
+    return res.status(400).json({ error: 'Placares do palpite inválidos.' });
+  }
+
+  try {
+    const match = await prisma.match.findUnique({ where: { id } });
+    if (!match) {
+      return res.status(404).json({ error: 'Partida não encontrada.' });
+    }
+
+    if (match.status !== 'scheduled') {
+      return res.status(400).json({ error: 'Palpites só são permitidos para partidas futuras (agendadas).' });
+    }
+
+    // Pega o usuário padrão
+    let user = await prisma.user.findFirst();
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          username: "critico_tatico",
+          email: "critico@futnota.com",
+          passwordHash: "senha_hash_mock"
+        }
+      });
+    }
+
+    // Cria ou atualiza o palpite (upsert)
+    await prisma.prediction.upsert({
+      where: {
+        userId_matchId: {
+          userId: user.id,
+          matchId: id
+        }
+      },
+      create: {
+        userId: user.id,
+        matchId: id,
+        predictHomeScore: Number(predictHomeScore),
+        predictAwayScore: Number(predictAwayScore),
+        analysis: analysis || ""
+      },
+      update: {
+        predictHomeScore: Number(predictHomeScore),
+        predictAwayScore: Number(predictAwayScore),
+        analysis: analysis || ""
+      }
+    });
+
+    // Retorna a partida atualizada com previsões e análises recalculadas
+    const updatedMatch = await prisma.match.findUnique({
+      where: { id },
+      include: {
+        reviews: { orderBy: { createdAt: 'desc' } },
+        predictions: {
+          include: { user: { select: { username: true } } },
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+
+    const total = updatedMatch!.predictions.length;
+    let homeWins = 0;
+    let draws = 0;
+    let awayWins = 0;
+    for (const p of updatedMatch!.predictions) {
+      if (p.predictHomeScore > p.predictAwayScore) homeWins++;
+      else if (p.predictHomeScore === p.predictAwayScore) draws++;
+      else awayWins++;
+    }
+
+    const predictionStats = {
+      homeWinPct: total > 0 ? Math.round((homeWins / total) * 100) : 0,
+      drawPct: total > 0 ? Math.round((draws / total) * 100) : 0,
+      awayWinPct: total > 0 ? Math.round((awayWins / total) * 100) : 0,
+      totalCount: total
+    };
+
+    const parsedMatch = {
+      ...updatedMatch,
+      timeline: JSON.parse(updatedMatch!.timeline || '[]'),
+      lineups: updatedMatch!.lineups ? JSON.parse(updatedMatch!.lineups) : null,
+      reviews: updatedMatch!.reviews.map(r => ({ ...r, date: r.createdAt.toISOString() })),
+      predictions: updatedMatch!.predictions.map(p => ({
+        id: p.id,
+        userId: p.userId,
+        username: p.user.username,
+        predictHomeScore: p.predictHomeScore,
+        predictAwayScore: p.predictAwayScore,
+        analysis: p.analysis,
+        createdAt: p.createdAt.toISOString()
+      })),
+      predictionStats
+    };
+
+    // Publica no Redis para notificar conexões SSE ativas
+    await redis.publish('match:updates', JSON.stringify(parsedMatch));
+
+    res.json(parsedMatch);
+  } catch (err: any) {
+    console.error("Erro ao salvar palpite:", err);
     res.status(500).json({ error: err.message });
   }
 });

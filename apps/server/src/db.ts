@@ -10,8 +10,10 @@ const SEED_MATCHES = [
     leagueEmoji: "🏆",
     homeTeam: "Milan",
     homeEmoji: "🔴",
+    homeLogoUrl: "https://upload.wikimedia.org/wikipedia/commons/d/d1/AC_Milan_logo.svg",
     awayTeam: "Liverpool",
     awayEmoji: "🔴",
+    awayLogoUrl: "https://upload.wikimedia.org/wikipedia/pt/0/0c/Liverpool_FC.svg",
     status: "completed",
     date: "2005-05-25",
     time: "20:45",
@@ -76,8 +78,10 @@ const SEED_MATCHES = [
     leagueEmoji: "🌎",
     homeTeam: "Brasil",
     homeEmoji: "🟡",
+    homeLogoUrl: "https://upload.wikimedia.org/wikipedia/pt/b/b8/CBF_logo.svg",
     awayTeam: "Alemanha",
     awayEmoji: "⚪",
+    awayLogoUrl: "https://upload.wikimedia.org/wikipedia/commons/e/e3/DFB_logo_%282003%29.svg",
     status: "completed",
     date: "2014-07-08",
     time: "17:00",
@@ -140,8 +144,10 @@ const SEED_MATCHES = [
     leagueEmoji: "🇧🇷",
     homeTeam: "Flamengo",
     homeEmoji: "🔴",
+    homeLogoUrl: "https://upload.wikimedia.org/wikipedia/commons/1/15/CR_Flamengo_crest.svg",
     awayTeam: "Vasco",
     awayEmoji: "⚫",
+    awayLogoUrl: "https://upload.wikimedia.org/wikipedia/pt/e/e9/Vasco_da_Gama_2020.svg",
     status: "live",
     date: "2026-07-01",
     time: "20:00",
@@ -200,8 +206,10 @@ const SEED_MATCHES = [
     leagueEmoji: "🇪🇸",
     homeTeam: "Barcelona",
     homeEmoji: "🔵",
+    homeLogoUrl: "https://upload.wikimedia.org/wikipedia/pt/4/43/FCBarcelona.svg",
     awayTeam: "Real Madrid",
     awayEmoji: "⚪",
+    awayLogoUrl: "https://upload.wikimedia.org/wikipedia/pt/9/98/Real_Madrid.svg",
     status: "scheduled",
     date: "2026-07-05",
     time: "16:00",
@@ -245,8 +253,10 @@ export async function seedDatabase() {
           leagueEmoji: m.leagueEmoji,
           homeTeam: m.homeTeam,
           homeEmoji: m.homeEmoji,
+          homeLogoUrl: m.homeLogoUrl,
           awayTeam: m.awayTeam,
           awayEmoji: m.awayEmoji,
+          awayLogoUrl: m.awayLogoUrl,
           status: m.status,
           date: m.date,
           time: m.time,
@@ -281,6 +291,28 @@ export async function seedDatabase() {
               rating: 9.0,
               text: "A defesa de Dudek no chute de Shevchenko no final da prorrogação desafia as leis da física. O jogo em si foi cheio de erros defensivos no segundo tempo, o que de certa forma o torna ainda mais emocionante para o espectador neutro.",
               likes: 45
+            }
+          ]
+        });
+      }
+
+      // Se for o clássico agendado Barcelona x Real Madrid, adiciona os palpites iniciais
+      if (m.id === "sched-la-liga-bar-real") {
+        await prisma.prediction.createMany({
+          data: [
+            {
+              userId: user1.id,
+              matchId: m.id,
+              predictHomeScore: 3,
+              predictAwayScore: 1,
+              analysis: "Barcelona em excelente momento tático atuando no Camp Nou. Com o meio-campo compactado, devem anular as infiltrações rápidas do adversário e explorar transições rápidas."
+            },
+            {
+              userId: user2.id,
+              matchId: m.id,
+              predictHomeScore: 1,
+              predictAwayScore: 2,
+              analysis: "O Real Madrid costuma crescer muito em clássicos. Vinícius Jr deve incomodar bastante a linha alta do Barcelona em jogadas de profundidade pelas costas dos laterais."
             }
           ]
         });

@@ -84,8 +84,11 @@ export const Pitch: React.FC<PitchProps> = ({ match }) => {
       <div className="lineup-lists-container">
         {/* Home Team Card */}
         <div className="lineup-team-card">
-          <h4 className="lineup-team-title">
-            <span>{match.homeEmoji} {match.homeTeam}</span>
+          <h4 className="lineup-team-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {match.homeLogoUrl ? <img src={match.homeLogoUrl} alt="" className="team-logo-img" style={{ width: '20px', height: '20px' }} /> : match.homeEmoji}
+              {match.homeTeam}
+            </span>
             <span>Formação: {match.lineups.home.formation}</span>
           </h4>
           {match.lineups.home.players.map(p => (
@@ -98,8 +101,11 @@ export const Pitch: React.FC<PitchProps> = ({ match }) => {
 
         {/* Away Team Card */}
         <div className="lineup-team-card">
-          <h4 className="lineup-team-title" style={{ color: '#3b82f6' }}>
-            <span>{match.awayEmoji} {match.awayTeam}</span>
+          <h4 className="lineup-team-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#3b82f6' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {match.awayLogoUrl ? <img src={match.awayLogoUrl} alt="" className="team-logo-img" style={{ width: '20px', height: '20px' }} /> : match.awayEmoji}
+              {match.awayTeam}
+            </span>
             <span>Formação: {match.lineups.away.formation}</span>
           </h4>
           {match.lineups.away.players.map(p => (
