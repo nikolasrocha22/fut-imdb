@@ -4,10 +4,11 @@ import type { Match } from '@footrate/shared';
 
 interface MatchCardProps {
   match: Match;
-  onClick: () => void;
+  onClick?: () => void;
+  hidePrediction?: boolean;
 }
 
-export const MatchCard: React.FC<MatchCardProps> = ({ match, onClick }) => {
+export const MatchCard: React.FC<MatchCardProps> = ({ match, onClick, hidePrediction }) => {
   const [homeLogoError, setHomeLogoError] = useState(false);
   const [awayLogoError, setAwayLogoError] = useState(false);
 
@@ -83,7 +84,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onClick }) => {
                 {ratingText}
               </span>
             )}
-            {isScheduled && match.predictionStats && match.predictionStats.totalCount > 0 && (
+            {isScheduled && match.predictionStats && match.predictionStats.totalCount > 0 && !hidePrediction && (
               <span className="rating-badge" style={{ color: 'var(--accent-secondary)', borderColor: 'rgba(59, 130, 246, 0.25)', background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, transparent 100%)' }}>
                 🗳️ {match.predictionStats.totalCount} palpites
               </span>
