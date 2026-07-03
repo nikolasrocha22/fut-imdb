@@ -9,6 +9,7 @@ import {
   isApiConfigured,
   type ApiFixture,
 } from './footballService';
+import { generatePreMatchAnalysis } from './aiService';
 
 // Emojis para times brasileiros e seleções (fallback quando API não tem logo)
 const EMOJI_MAP: Record<string, string> = {
@@ -72,6 +73,25 @@ async function upsertFixture(fix: ApiFixture): Promise<void> {
     }
   } catch { /* silencioso */ }
 
+  // Gera Análise Tática via IA
+  const tacticalAnalysis = await generatePreMatchAnalysis({
+    id: matchId,
+    homeTeam: fix.homeTeam,
+    awayTeam: fix.awayTeam,
+    league: fix.league,
+    stadium: fix.stadium,
+    date: fix.date,
+    time: fix.time,
+    lineups: lineupsJson ? JSON.parse(lineupsJson) : null,
+    tacticalAnalysis: ''
+  });
+
+  const existing = await prisma.match.findUnique({ where: { id: matchId } });
+
+  // Cria um gerador realista de votos/rating se o jogo for novo
+  const initialRating = existing ? existing.rating : parseFloat((Math.random() * (9.5 - 6.0) + 6.0).toFixed(1));
+  const initialVotes = existing ? existing.votes : Math.floor(Math.random() * (5000 - 500) + 500);
+
   const data = {
     league: fix.league,
     leagueEmoji: fix.leagueEmoji,
@@ -88,12 +108,14 @@ async function upsertFixture(fix: ApiFixture): Promise<void> {
     penAway: fix.penAway,
     date: fix.date,
     time: fix.time,
-    stadium: fix.stadium ? `${fix.stadium}, ${fix.city}`.replace(', ', ', ') : 'A definir',
+    stadium: fix.stadium ? `${fix.stadium}, ${fix.city}`.replace(', ', ', ').replace(/,\s*$/, '') : 'A definir',
     referee: fix.referee,
     liveMinute: fix.liveMinute,
     externalId: fix.externalId,
-    tacticalAnalysis: `${fix.homeTeam} x ${fix.awayTeam} — ${fix.league}`,
+    tacticalAnalysis: tacticalAnalysis,
     timeline: '[]',
+    rating: initialRating,
+    votes: initialVotes,
     ...(lineupsJson && { lineups: lineupsJson }),
   };
 
@@ -109,6 +131,7 @@ async function upsertFixture(fix: ApiFixture): Promise<void> {
       liveMinute: data.liveMinute,
       homeLogoUrl: data.homeLogoUrl,
       awayLogoUrl: data.awayLogoUrl,
+      tacticalAnalysis: data.tacticalAnalysis, // Pode ter sido atualizada pela IA
       ...(lineupsJson && { lineups: lineupsJson }),
     },
   });
