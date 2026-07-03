@@ -461,8 +461,9 @@ async function start() {
   await redis.connect();
 
   // Inicia o servidor HTTP
-  app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
+  const portNumber = Number(PORT);
+  app.listen(portNumber, '0.0.0.0', () => {
+    console.log(`Servidor rodando em http://0.0.0.0:${portNumber}`);
     console.log(`IA habilitada: ${isAiConfigured() ? '✅ Gemini configurado' : '⚠️  GEMINI_API_KEY não configurada'}`);
 
     // Inicia o simulador automático de jogos ao vivo (dados locais/seed)
