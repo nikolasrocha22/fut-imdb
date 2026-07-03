@@ -301,15 +301,27 @@ export default function App() {
                         </td>
                         <td>
                           <div className="match-cell-teams">
-                            {m.homeLogoUrl && (
-                              <img src={m.homeLogoUrl} alt="" className="logo-base logo-pitch" />
-                            )}
+                            {m.homeLogoUrl ? (
+                              <img 
+                                src={m.homeLogoUrl} 
+                                alt="" 
+                                className="logo-base logo-pitch" 
+                                onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'inline'; }}
+                              />
+                            ) : null}
+                            <span className="team-emoji" style={{ display: m.homeLogoUrl ? 'none' : 'inline', fontSize: '1.2rem' }}>{m.homeEmoji}</span>
                             <span>{m.homeTeam}</span>
                             <span className="match-cell-score">{m.score?.home} x {m.score?.away}</span>
                             <span>{m.awayTeam}</span>
-                            {m.awayLogoUrl && (
-                              <img src={m.awayLogoUrl} alt="" className="logo-base logo-pitch" />
-                            )}
+                            {m.awayLogoUrl ? (
+                              <img 
+                                src={m.awayLogoUrl} 
+                                alt="" 
+                                className="logo-base logo-pitch" 
+                                onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'inline'; }}
+                              />
+                            ) : null}
+                            <span className="team-emoji" style={{ display: m.awayLogoUrl ? 'none' : 'inline', fontSize: '1.2rem' }}>{m.awayEmoji}</span>
                           </div>
                         </td>
                         <td>{m.leagueEmoji} {m.league}</td>
