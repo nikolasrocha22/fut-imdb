@@ -32,8 +32,8 @@ interface LiveStatsProps {
   awayColor?: string;
 }
 
-const NEON_HOME = '#00ff88';
-const NEON_AWAY = '#00c3ff';
+const NEON_HOME = '#10b981';
+const NEON_AWAY = '#3b82f6';
 
 export const LiveStats: React.FC<LiveStatsProps> = ({
   stats,

@@ -171,7 +171,7 @@ export const MatchModal: React.FC<MatchModalProps> = ({ matchId, onClose, onRevi
                 <img 
                   src={match.homeLogoUrl} 
                   alt="" 
-                  className="score-team-logo" 
+                  className="logo-base logo-modal" 
                   onError={() => setHomeLogoError(true)} 
                 />
               ) : (
@@ -194,7 +194,7 @@ export const MatchModal: React.FC<MatchModalProps> = ({ matchId, onClose, onRevi
                 <img 
                   src={match.awayLogoUrl} 
                   alt="" 
-                  className="score-team-logo" 
+                  className="logo-base logo-modal" 
                   onError={() => setAwayLogoError(true)} 
                 />
               ) : (

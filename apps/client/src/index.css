@@ -451,15 +451,24 @@ body::after {
   gap: 14px;
 }
 
-.team-logo-img {
-  width: 28px;
-  height: 28px;
+/* Unified Logo System */
+.logo-base {
   object-fit: contain;
-  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.3));
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+  transition: var(--transition-fast);
 }
+.logo-hero { width: 56px; height: 56px; }
+.logo-card { width: 40px; height: 40px; }
+.logo-modal { 
+  width: 72px; 
+  height: 72px; 
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.6)); 
+}
+.logo-pitch { width: 24px; height: 24px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
 
 .team-emoji {
-  font-size: 1.6rem;
+  font-size: 1.8rem;
+  line-height: 1;
 }
 
 .team-name {
@@ -766,12 +775,7 @@ body::after {
   font-size: 2.8rem;
 }
 
-.score-team-logo {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));
-}
+/* score-team-logo removido (usando logo-modal) */
 
 .score-team-name {
   font-family: var(--font-heading);

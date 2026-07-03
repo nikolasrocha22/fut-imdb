@@ -28,7 +28,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onClick }) => {
         <img 
           src={match.homeLogoUrl} 
           alt={match.homeTeam} 
-          className="team-logo-img" 
+          className="logo-base logo-card" 
           onError={() => setHomeLogoError(true)}
         />
       );
@@ -42,7 +42,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onClick }) => {
         <img 
           src={match.awayLogoUrl} 
           alt={match.awayTeam} 
-          className="team-logo-img" 
+          className="logo-base logo-card" 
           onError={() => setAwayLogoError(true)}
         />
       );

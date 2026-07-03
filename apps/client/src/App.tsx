@@ -213,7 +213,7 @@ export default function App() {
                   <div className="hero-tag">🔥 MELHOR AVALIADO</div>
                   <h2 className="hero-title" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
                     {heroMatch.homeLogoUrl && (
-                      <img src={heroMatch.homeLogoUrl} alt="" className="team-logo-img" style={{ width: '48px', height: '48px' }} />
+                      <img src={heroMatch.homeLogoUrl} alt="" className="logo-base logo-hero" />
                     )}
                     <span>{heroMatch.homeTeam}</span>
                     <span style={{ fontFamily: 'var(--font-mono)' }}>{heroMatch.score?.home}</span>
@@ -221,7 +221,7 @@ export default function App() {
                     <span style={{ fontFamily: 'var(--font-mono)' }}>{heroMatch.score?.away}</span>
                     <span>{heroMatch.awayTeam}</span>
                     {heroMatch.awayLogoUrl && (
-                      <img src={heroMatch.awayLogoUrl} alt="" className="team-logo-img" style={{ width: '48px', height: '48px' }} />
+                      <img src={heroMatch.awayLogoUrl} alt="" className="logo-base logo-hero" />
                     )}
                   </h2>
                   <p className="hero-description">
@@ -290,13 +290,13 @@ export default function App() {
                         <td>
                           <div className="match-cell-teams">
                             {m.homeLogoUrl && (
-                              <img src={m.homeLogoUrl} alt="" className="team-logo-img" style={{ width: '24px', height: '24px' }} />
+                              <img src={m.homeLogoUrl} alt="" className="logo-base logo-pitch" />
                             )}
                             <span>{m.homeTeam}</span>
                             <span className="match-cell-score">{m.score?.home} x {m.score?.away}</span>
                             <span>{m.awayTeam}</span>
                             {m.awayLogoUrl && (
-                              <img src={m.awayLogoUrl} alt="" className="team-logo-img" style={{ width: '24px', height: '24px' }} />
+                              <img src={m.awayLogoUrl} alt="" className="logo-base logo-pitch" />
                             )}
                           </div>
                         </td>
