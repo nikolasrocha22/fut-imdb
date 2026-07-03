@@ -217,7 +217,7 @@ export default function App() {
                         src={heroMatch.homeLogoUrl} 
                         alt="" 
                         className="logo-base logo-hero" 
-                        onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling!.style.display = 'inline'; }}
+                        onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'inline'; }}
                       />
                     ) : null}
                     <span className="team-emoji" style={{ display: heroMatch.homeLogoUrl ? 'none' : 'inline', fontSize: '2rem' }}>{heroMatch.homeEmoji}</span>
@@ -231,7 +231,7 @@ export default function App() {
                         src={heroMatch.awayLogoUrl} 
                         alt="" 
                         className="logo-base logo-hero" 
-                        onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling!.style.display = 'inline'; }}
+                        onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'inline'; }}
                       />
                     ) : null}
                     <span className="team-emoji" style={{ display: heroMatch.awayLogoUrl ? 'none' : 'inline', fontSize: '2rem' }}>{heroMatch.awayEmoji}</span>
