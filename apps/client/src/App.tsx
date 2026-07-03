@@ -8,8 +8,7 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { MyRanking } from './pages/MyRanking';
 import { Standings } from './pages/Standings';
-
-const API_BASE_URL = 'http://localhost:3001';
+import { API_BASE_URL } from './config';
 
 function UserMenu({ navigate }: { navigate: (tab: string) => void }) {
   const { user, logout } = useAuth();

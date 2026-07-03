@@ -19,12 +19,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('@FutNota:token');
-    const storedUser = localStorage.getItem('@FutNota:user');
+    try {
+      const storedToken = localStorage.getItem('@FutNota:token');
+      const storedUser = localStorage.getItem('@FutNota:user');
 
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+      if (storedToken && storedUser && storedUser !== 'undefined') {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+      }
+    } catch(err) {
+      console.error('Erro ao ler auth do localstorage:', err);
+      localStorage.removeItem('@FutNota:token');
+      localStorage.removeItem('@FutNota:user');
     }
   }, []);
 
