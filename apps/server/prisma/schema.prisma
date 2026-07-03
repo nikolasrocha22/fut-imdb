@@ -24,6 +24,7 @@ model Match {
   externalId       Int?         @unique  // ID da API-Football
   league           String
   leagueEmoji      String
+  leagueLogoUrl    String?
   homeTeam         String
   homeEmoji        String
   homeLogoUrl      String?

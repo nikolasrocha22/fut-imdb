@@ -79,6 +79,7 @@ async function upsertFixture(fix: ApiFixture): Promise<void> {
     homeTeam: fix.homeTeam,
     awayTeam: fix.awayTeam,
     league: fix.league,
+    leagueId: fix.leagueId,
     stadium: fix.stadium,
     date: fix.date,
     time: fix.time,
@@ -95,6 +96,7 @@ async function upsertFixture(fix: ApiFixture): Promise<void> {
   const data = {
     league: fix.league,
     leagueEmoji: fix.leagueEmoji,
+    leagueLogoUrl: fix.leagueLogoUrl,
     homeTeam: fix.homeTeam,
     homeEmoji: getTeamEmoji(fix.homeTeam),
     homeLogoUrl: fix.homeLogo || null,
@@ -129,6 +131,7 @@ async function upsertFixture(fix: ApiFixture): Promise<void> {
       penHome: data.penHome,
       penAway: data.penAway,
       liveMinute: data.liveMinute,
+      leagueLogoUrl: data.leagueLogoUrl,
       homeLogoUrl: data.homeLogoUrl,
       awayLogoUrl: data.awayLogoUrl,
       tacticalAnalysis: data.tacticalAnalysis, // Pode ter sido atualizada pela IA

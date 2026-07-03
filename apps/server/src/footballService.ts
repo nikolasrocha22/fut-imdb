@@ -109,6 +109,7 @@ function normalizeFixture(f: any): ApiFixture {
     league: f.competition?.name || 'Amistoso',
     leagueId: f.competition?.id || 0,
     leagueEmoji: getLeagueEmoji(f.competition?.id || 0),
+    leagueLogoUrl: f.competition?.emblem || null,
     homeTeam: f.homeTeam?.name || 'Time Mandante',
     homeLogo: f.homeTeam?.crest || null,
     awayTeam: f.awayTeam?.name || 'Time Visitante',
@@ -153,6 +154,7 @@ export interface ApiFixture {
   league: string;
   leagueId: number;
   leagueEmoji: string;
+  leagueLogoUrl: string | null;
   homeTeam: string;
   homeLogo: string;
   awayTeam: string;
@@ -197,4 +199,34 @@ export interface ApiMatchStats {
   passesTotal: { home: number; away: number };
   passesAccuracy: { home: number; away: number };
   dangerousAttacks: { home: number; away: number };
+}
+
+export async function fetchCompetitionStandings(leagueId: number): Promise<any | null> {
+  const headers = getHeaders();
+  if (!headers) return null;
+
+  try {
+    const response = await axios.get(`${getBaseUrl()}/v4/competitions/${leagueId}/standings`, {
+      headers
+    });
+    return response.data;
+  } catch (err: any) {
+    console.error(`[FootballService] Erro ao buscar standings da liga ${leagueId}:`, err.message);
+    return null;
+  }
+}
+
+export async function fetchCompetitionScorers(leagueId: number): Promise<any | null> {
+  const headers = getHeaders();
+  if (!headers) return null;
+
+  try {
+    const response = await axios.get(`${getBaseUrl()}/v4/competitions/${leagueId}/scorers`, {
+      headers
+    });
+    return response.data;
+  } catch (err: any) {
+    console.error(`[FootballService] Erro ao buscar artilheiros da liga ${leagueId}:`, err.message);
+    return null;
+  }
 }

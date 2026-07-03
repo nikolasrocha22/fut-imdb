@@ -8,6 +8,8 @@ import { startMatchSimulator } from './simulator';
 import { startSyncService } from './syncService';
 import { startLivePoller } from './livePoller';
 import { getLatestAnalysis, generatePreMatchAnalysis, isAiConfigured } from './aiService';
+import { fetchCompetitionStandings, fetchCompetitionScorers } from './footballService';
+import { authRouter, requireAuth } from './auth';
 
 dotenv.config();
 
@@ -17,9 +19,31 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+app.use('/api/auth', authRouter);
+
 // Rota de Health Check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date() });
+});
+
+// REST: Standings
+app.get('/api/competitions/:id/standings', async (req, res) => {
+  try {
+    const data = await fetchCompetitionStandings(Number(req.params.id));
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// REST: Scorers
+app.get('/api/competitions/:id/scorers', async (req, res) => {
+  try {
+    const data = await fetchCompetitionScorers(Number(req.params.id));
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // REST: Listar partidas
@@ -112,9 +136,10 @@ app.get('/api/matches/:id', async (req, res) => {
 });
 
 // REST: Publicar uma avaliação (IMDb)
-app.post('/api/matches/:id/reviews', async (req, res) => {
+app.post('/api/matches/:id/reviews', requireAuth, async (req: any, res: any) => {
   const { id } = req.params;
   const { rating, text } = req.body;
+  const userId = req.userId;
 
   if (rating === undefined || rating < 0 || rating > 10) {
     return res.status(400).json({ error: 'Nota inválida. Deve ser entre 0 e 10.' });
@@ -126,16 +151,9 @@ app.post('/api/matches/:id/reviews', async (req, res) => {
       return res.status(404).json({ error: 'Partida não encontrada.' });
     }
 
-    // Pega o usuário padrão criado no seed (para simulação de auth)
-    let user = await prisma.user.findFirst();
+    const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
-      user = await prisma.user.create({
-        data: {
-          username: "critico_tatico",
-          email: "critico@futnota.com",
-          passwordHash: "senha_hash_mock"
-        }
-      });
+      return res.status(401).json({ error: 'Usuário não encontrado.' });
     }
 
     // Executa a transação para salvar a nota e recalcular a média geral da partida

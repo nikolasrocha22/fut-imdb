@@ -3,10 +3,37 @@ import { useState, useEffect } from 'react';
 import type { Match } from '@footrate/shared';
 import { MatchCard } from './components/MatchCard';
 import { MatchModal } from './components/MatchModal';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { Login } from './pages/Login';
+import { Register } from './pages/Register';
+import { MyRanking } from './pages/MyRanking';
+import { Standings } from './pages/Standings';
 
 const API_BASE_URL = 'http://localhost:3001';
 
-export default function App() {
+function UserMenu({ navigate }: { navigate: (tab: string) => void }) {
+  const { user, logout } = useAuth();
+  
+  if (user) {
+    return (
+      <div className="flex items-center gap-4">
+        <button onClick={() => navigate('me')} className="text-sm font-bold text-primary hover:underline bg-transparent border-none cursor-pointer">
+          {user.username}
+        </button>
+        <button onClick={logout} className="text-sm text-textSecondary hover:text-white bg-transparent border-none cursor-pointer">Sair</button>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="flex items-center gap-4">
+      <button onClick={() => navigate('login')} className="text-sm font-semibold hover:text-primary transition-colors bg-transparent border-none cursor-pointer">Entrar</button>
+      <button onClick={() => navigate('register')} className="text-sm font-bold bg-primary text-background px-4 py-2 rounded-full hover:bg-opacity-90 transition-colors border-none cursor-pointer">Cadastrar</button>
+    </div>
+  );
+}
+
+function MainApp() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [activeTab, setActiveTab] = useState<string>('home'); // 'home', 'ranking', 'agenda'
   const [leagueFilter, setLeagueFilter] = useState<string>('all');
@@ -130,11 +157,11 @@ export default function App() {
               <span className="nav-text">Ranking IMDb</span>
             </button>
             <button 
-              className={`nav-item ${activeTab === 'agenda' ? 'active' : ''}`}
-              onClick={() => { setActiveTab('agenda'); setSearchQuery(''); }}
+              className={`nav-item ${activeTab === 'standings' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('standings'); setSearchQuery(''); }}
             >
-              <span className="nav-icon">📅</span>
-              <span className="nav-text">Agenda</span>
+              <span className="nav-icon">📊</span>
+              <span className="nav-text">Tabelas & Artilheiros</span>
             </button>
           </nav>
         </div>
@@ -161,10 +188,7 @@ export default function App() {
             <button className="theme-toggle" onClick={toggleTheme} title="Alternar Modo Claro/Escuro">
               {theme === 'dark' ? '🌙' : '☀️'}
             </button>
-            <div className="user-profile">
-              <span className="avatar">⚽</span>
-              <span className="username">Fã de Futebol</span>
-            </div>
+            <UserMenu navigate={setActiveTab} />
           </div>
         </header>
 
@@ -191,6 +215,14 @@ export default function App() {
                 </div>
               )}
             </div>
+          ) : activeTab === 'login' ? (
+            <Login navigate={setActiveTab} />
+          ) : activeTab === 'register' ? (
+            <Register navigate={setActiveTab} />
+          ) : activeTab === 'me' ? (
+            <MyRanking />
+          ) : activeTab === 'standings' ? (
+            <Standings />
           ) : activeTab === 'home' ? (
             // Página de Início
             <div>
@@ -368,5 +400,13 @@ export default function App() {
         />
       )}
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <MainApp />
+    </AuthProvider>
   );
 }

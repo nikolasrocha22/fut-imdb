@@ -3,7 +3,7 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { prisma } from './db';
-import type { ApiMatchStats, ApiEvent } from './footballService';
+import { fetchCompetitionStandings, type ApiMatchStats, type ApiEvent } from './footballService';
 
 let genAI: GoogleGenerativeAI | null = null;
 
@@ -29,6 +29,7 @@ export async function generatePreMatchAnalysis(match: {
   homeTeam: string;
   awayTeam: string;
   league: string;
+  leagueId: number;
   stadium: string;
   date: string;
   time: string;
@@ -49,6 +50,22 @@ export async function generatePreMatchAnalysis(match: {
     ? `\nEscalação ${match.homeTeam}: ${match.lineups.home?.formation} - ${match.lineups.home?.players?.slice(0,5).map((p: any) => p.name).join(', ')}...\nEscalação ${match.awayTeam}: ${match.lineups.away?.formation} - ${match.lineups.away?.players?.slice(0,5).map((p: any) => p.name).join(', ')}...`
     : '';
 
+  let standingsText = '';
+  if (match.leagueId) {
+    try {
+      const standings = await fetchCompetitionStandings(match.leagueId);
+      if (standings && standings.standings && standings.standings.length > 0) {
+        const table = standings.standings[0].table;
+        // fuzzy match
+        const homePos = table.find((t: any) => t.team.name.includes(match.homeTeam) || match.homeTeam.includes(t.team.name));
+        const awayPos = table.find((t: any) => t.team.name.includes(match.awayTeam) || match.awayTeam.includes(t.team.name));
+        if (homePos && awayPos) {
+          standingsText = `\nContexto do Campeonato:\n- ${match.homeTeam} está em ${homePos.position}º lugar com ${homePos.points} pontos.\n- ${match.awayTeam} está em ${awayPos.position}º lugar com ${awayPos.points} pontos.\nLeve o desespero do time mal colocado ou o favoritismo do líder em conta na sua análise!`;
+        }
+      }
+    } catch { /* ignorar falha */ }
+  }
+
   const prompt = `Você é um analista tático de futebol especialista, com linguagem envolvente e técnica. 
 Faça uma análise pré-jogo completa em PORTUGUÊS BRASILEIRO para:
 
@@ -57,6 +74,7 @@ Competição: ${match.league}
 Data: ${match.date} às ${match.time}
 Estádio: ${match.stadium}
 ${lineupsText}
+${standingsText}
 
 Analise:
 1. O que esperar taticamente de cada equipe

@@ -74,7 +74,9 @@ export interface PredictionStats {
 export interface Match {
   id: string;
   league: string;
+  leagueId: number;
   leagueEmoji: string;
+  leagueLogoUrl: string | null;
   homeTeam: string;
   homeEmoji: string;
   homeLogoUrl?: string | null;
