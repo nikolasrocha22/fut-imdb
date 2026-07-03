@@ -209,6 +209,58 @@ export const MatchModal: React.FC<MatchModalProps> = ({ matchId, onClose, onRevi
             <span>Referee: 🏁 {match.referee}</span>
           </div>
 
+          {/* Odds & Probabilidades */}
+          {match.probabilities && match.probabilities.homeWin > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', margin: '8px 0' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>📊 Probabilidades</div>
+              <div style={{ display: 'flex', height: '24px', borderRadius: '12px', overflow: 'hidden', fontSize: '0.7rem', fontWeight: 700 }}>
+                <div style={{ width: `${match.probabilities.homeWin}%`, background: 'linear-gradient(135deg, #22c55e, #16a34a)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', minWidth: '30px' }}>
+                  {match.probabilities.homeWin.toFixed(0)}%
+                </div>
+                <div style={{ width: `${match.probabilities.draw}%`, background: 'linear-gradient(135deg, #f59e0b, #d97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', minWidth: '30px' }}>
+                  {match.probabilities.draw.toFixed(0)}%
+                </div>
+                <div style={{ width: `${match.probabilities.awayWin}%`, background: 'linear-gradient(135deg, #ef4444, #dc2626)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', minWidth: '30px' }}>
+                  {match.probabilities.awayWin.toFixed(0)}%
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                <span>🏠 {match.homeTeam}</span>
+                <span>🤝 Empate</span>
+                <span>🏃 {match.awayTeam}</span>
+              </div>
+              {match.odds && (
+                <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '4px' }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--accent-green)' }}>{match.odds.homeWin.toFixed(2)}</div>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>ODD Casa</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--accent-yellow)' }}>{match.odds.draw.toFixed(2)}</div>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>ODD Empate</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--accent-red)' }}>{match.odds.awayWin.toFixed(2)}</div>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>ODD Fora</div>
+                  </div>
+                </div>
+              )}
+              {match.xg && (match.xg.home > 0 || match.xg.away > 0) && (
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', marginTop: '4px', padding: '8px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>{match.xg.home.toFixed(2)}</div>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>xG {match.homeTeam.split(' ')[0]}</div>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}>vs</div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>{match.xg.away.toFixed(2)}</div>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>xG {match.awayTeam.split(' ')[0]}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {!isScheduled ? (
             <div className="header-rating-box">
               <div className="rating-value">

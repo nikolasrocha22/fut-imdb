@@ -99,6 +99,9 @@ export interface Match {
   predictions?: Prediction[];
   predictionStats?: PredictionStats;
   userRating?: number | null; // Se o usuário atual deu nota
+  odds?: { homeWin: number; draw: number; awayWin: number } | null;
+  probabilities?: { homeWin: number; draw: number; awayWin: number } | null;
+  xg?: { home: number; away: number } | null;
 }
 
 export interface User {

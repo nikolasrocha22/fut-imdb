@@ -118,6 +118,9 @@ async function upsertFixture(fix: ApiFixture): Promise<void> {
     timeline: '[]',
     rating: initialRating,
     votes: initialVotes,
+    oddsJson: fix.odds ? JSON.stringify(fix.odds) : null,
+    probabilitiesJson: fix.probabilities ? JSON.stringify(fix.probabilities) : null,
+    xgJson: fix.xg ? JSON.stringify(fix.xg) : null,
     ...(lineupsJson && { lineups: lineupsJson }),
   };
 

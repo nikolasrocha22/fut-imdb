@@ -12,6 +12,7 @@ import { fetchCompetitionStandings, fetchCompetitionScorers } from './footballSe
 import { authRouter, requireAuth } from './auth';
 
 dotenv.config();
+console.log('FOOTBALL_API_KEY loaded:', process.env.FOOTBALL_API_KEY);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -58,9 +59,16 @@ app.get('/api/matches', async (req, res) => {
     // Desserializa os dados JSON antes de enviar para o cliente
     const parsedMatches = matches.map(m => ({
       ...m,
+      score: m.scoreHome !== null && m.scoreAway !== null ? { home: m.scoreHome, away: m.scoreAway } : null,
       timeline: JSON.parse(m.timeline || '[]'),
       lineups: m.lineups ? JSON.parse(m.lineups) : null,
-      liveStats: m.liveStats ? JSON.parse(m.liveStats) : null
+      liveStats: m.liveStats ? JSON.parse(m.liveStats) : null,
+      odds: m.oddsJson ? JSON.parse(m.oddsJson) : null,
+      probabilities: m.probabilitiesJson ? JSON.parse(m.probabilitiesJson) : null,
+      xg: m.xgJson ? JSON.parse(m.xgJson) : null,
+      oddsJson: undefined,
+      probabilitiesJson: undefined,
+      xgJson: undefined,
     }));
 
     res.json(parsedMatches);
@@ -113,9 +121,16 @@ app.get('/api/matches/:id', async (req, res) => {
 
     const parsed = {
       ...match,
+      score: match.scoreHome !== null && match.scoreAway !== null ? { home: match.scoreHome, away: match.scoreAway } : null,
       timeline: JSON.parse(match.timeline || '[]'),
       lineups: match.lineups ? JSON.parse(match.lineups) : null,
       liveStats: match.liveStats ? JSON.parse(match.liveStats) : null,
+      odds: (match as any).oddsJson ? JSON.parse((match as any).oddsJson) : null,
+      probabilities: (match as any).probabilitiesJson ? JSON.parse((match as any).probabilitiesJson) : null,
+      xg: (match as any).xgJson ? JSON.parse((match as any).xgJson) : null,
+      oddsJson: undefined,
+      probabilitiesJson: undefined,
+      xgJson: undefined,
       reviews: match.reviews.map(r => ({ ...r, date: r.createdAt.toISOString() })),
       predictions: match.predictions.map(p => ({
         id: p.id,
@@ -398,6 +413,7 @@ app.get('/api/matches/:id/ai-analysis', async (req, res) => {
         homeTeam: match.homeTeam,
         awayTeam: match.awayTeam,
         league: match.league,
+        leagueId: 0,
         stadium: match.stadium,
         date: match.date,
         time: match.time,

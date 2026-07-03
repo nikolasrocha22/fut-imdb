@@ -47,6 +47,9 @@ model Match {
   tacticalAnalysis String
   timeline         String                // JSON string com array de eventos
   lineups          String?               // JSON string com escalações
+  oddsJson         String?               // JSON: { homeWin, draw, awayWin }
+  probabilitiesJson String?              // JSON: { homeWin, draw, awayWin }
+  xgJson           String?               // JSON: { home, away }
   reviews          Review[]
   predictions      Prediction[]
   aiAnalyses       AiAnalysis[]

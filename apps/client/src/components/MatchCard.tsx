@@ -84,6 +84,11 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onClick, hidePredic
                 {ratingText}
               </span>
             )}
+            {isScheduled && match.probabilities && match.probabilities.homeWin > 0 && (
+              <span className="rating-badge" style={{ color: 'var(--accent-secondary)', borderColor: 'rgba(59, 130, 246, 0.25)', background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, transparent 100%)', fontSize: '0.7rem' }}>
+                🏠 {match.probabilities.homeWin.toFixed(0)}% · 🤝 {match.probabilities.draw.toFixed(0)}% · 🏃 {match.probabilities.awayWin.toFixed(0)}%
+              </span>
+            )}
             {isScheduled && match.predictionStats && match.predictionStats.totalCount > 0 && !hidePrediction && (
               <span className="rating-badge" style={{ color: 'var(--accent-secondary)', borderColor: 'rgba(59, 130, 246, 0.25)', background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, transparent 100%)' }}>
                 🗳️ {match.predictionStats.totalCount} palpites
