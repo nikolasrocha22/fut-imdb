@@ -212,17 +212,29 @@ export default function App() {
                 <div className="hero-banner">
                   <div className="hero-tag">🔥 MELHOR AVALIADO</div>
                   <h2 className="hero-title" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-                    {heroMatch.homeLogoUrl && (
-                      <img src={heroMatch.homeLogoUrl} alt="" className="logo-base logo-hero" />
-                    )}
+                    {heroMatch.homeLogoUrl ? (
+                      <img 
+                        src={heroMatch.homeLogoUrl} 
+                        alt="" 
+                        className="logo-base logo-hero" 
+                        onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling!.style.display = 'inline'; }}
+                      />
+                    ) : null}
+                    <span className="team-emoji" style={{ display: heroMatch.homeLogoUrl ? 'none' : 'inline', fontSize: '2rem' }}>{heroMatch.homeEmoji}</span>
                     <span>{heroMatch.homeTeam}</span>
                     <span style={{ fontFamily: 'var(--font-mono)' }}>{heroMatch.score?.home}</span>
                     <span style={{ color: 'var(--text-subtle)', fontWeight: 300 }}>x</span>
                     <span style={{ fontFamily: 'var(--font-mono)' }}>{heroMatch.score?.away}</span>
                     <span>{heroMatch.awayTeam}</span>
-                    {heroMatch.awayLogoUrl && (
-                      <img src={heroMatch.awayLogoUrl} alt="" className="logo-base logo-hero" />
-                    )}
+                    {heroMatch.awayLogoUrl ? (
+                      <img 
+                        src={heroMatch.awayLogoUrl} 
+                        alt="" 
+                        className="logo-base logo-hero" 
+                        onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling!.style.display = 'inline'; }}
+                      />
+                    ) : null}
+                    <span className="team-emoji" style={{ display: heroMatch.awayLogoUrl ? 'none' : 'inline', fontSize: '2rem' }}>{heroMatch.awayEmoji}</span>
                   </h2>
                   <p className="hero-description">
                     Acompanhe esta incrível partida de {heroMatch.league} avaliada com **⭐ {heroMatch.rating.toFixed(1)}** por nossa comunidade. Veja escalações táteis completas e as análises da torcida.
